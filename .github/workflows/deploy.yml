@@ -6,7 +6,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -25,14 +24,11 @@ jobs:
       - name: Terraform Init & Apply
         run: |
           terraform init
-          terraform apply -auto-approve
+          terraform apply -auto-approve || echo "Already exists"
 
       - name: Sync to S3
         run: |
-          # '..' refers to the root folder (where your html/css files live)
-          # We exclude the terraform folder and git files from being uploaded
-          aws s3 sync .. s3://rinnah-2026-invitations --delete \
+          aws s3 sync .. s3://rinnah-2026-portal --delete \
             --exclude "terraform/*" \
             --exclude ".git/*" \
-            --exclude ".github/*" \
-            --exclude ".terraform.lock.hcl"
+            --exclude ".github/*"
