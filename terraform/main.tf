@@ -32,3 +32,8 @@ resource "aws_s3_bucket_policy" "allow_public" {
     }]
   })
 }
+
+output "website_url" {
+  description = "The URL of the RINNAH 2026 Invitation Portal"
+  value       = "http://${aws_s3_bucket.rinnah_bucket.bucket}.s3-website-${aws_s3_bucket.rinnah_bucket.region}.amazonaws.com"
+}
