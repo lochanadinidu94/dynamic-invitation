@@ -7,11 +7,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # 1. Define credentials here so EVERY step can see them
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: 'ap-southeast-2' # Make sure this matches your main.tf region
+      AWS_REGION: 'ap-southeast-2' 
 
     defaults:
       run:
@@ -29,7 +28,11 @@ jobs:
           terraform apply -auto-approve
 
       - name: Sync to S3
-        # Removed the 'env:' from here because it's now global above
         run: |
-          # Go up one level from 'terraform' folder to find your 'dist' folder
-          aws s3 sync ../dist s3://rinnah-2026-invitations --delete
+          # '..' refers to the root folder (where your html/css files live)
+          # We exclude the terraform folder and git files from being uploaded
+          aws s3 sync .. s3://rinnah-2026-invitations --delete \
+            --exclude "terraform/*" \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --exclude ".terraform.lock.hcl"
