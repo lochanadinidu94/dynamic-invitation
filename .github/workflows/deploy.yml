@@ -21,10 +21,15 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name: Terraform Init & Apply
-        run: |
-          terraform init
-          terraform apply -auto-approve || echo "Already exists"
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Import (Fixes 409 Conflict)
+        # This step 'adopts' the existing bucket so the error disappears
+        run: terraform import aws_s3_bucket.rinnah_bucket rinnah-2026-portal || echo "Already imported"
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
 
       - name: Sync to S3
         run: |
