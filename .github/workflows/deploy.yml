@@ -25,8 +25,10 @@ jobs:
         run: terraform init
 
       - name: Terraform Import (Fixes 409 Conflict)
-        # This step 'adopts' the existing bucket so the error disappears
-        run: terraform import aws_s3_bucket.rinnah_bucket rinnah-2026-portal || echo "Already imported"
+        # This tells Terraform: "I already own these, just manage them"
+        run: |
+          terraform import aws_s3_bucket.rinnah_bucket rinnah-2026-portal || echo "S3 already imported"
+          terraform import aws_iam_role.lambda_exec_role rinnah_lambda_execution_role || echo "Role already imported"
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
