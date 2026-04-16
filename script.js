@@ -89,7 +89,7 @@ async function submitToLambda() {
 
     try {
         // IMPORTANT: Paste your output 'rsvp_api_endpoint' here
-        const API_URL = "https://your-api-id.execute-api.ap-southeast-2.amazonaws.com/rsvp";
+        const API_URL = "https://1ydjrm1ih5.execute-api.ap-southeast-2.amazonaws.com/rsvp";
 
         const payload = {
             id: currentGuest.ID,
