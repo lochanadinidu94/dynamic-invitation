@@ -3,55 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RINNAH2026</title>
+    <title>RINNAH 2026 | Invitation</title>
+    
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body>
 
-<div id="invitePage" class="page">
-    <div class="overlay"></div>
-    <div class="content">
-        <h1 class="glow">You’re Invited</h1>
-        <h2 id="guestDisplayName" class="script-font">Dear Guest</h2>
-        <p class="instruction-text">We have a special message for you</p>
-        <button onclick="openEvent()" class="enter-btn">Open Invitation</button>
-    </div>
-</div>
-
-<div id="eventPage" class="page hidden">
-    <div class="overlay"></div>
-
-    <audio id="bgMusic" loop>
-        <source src="music.mp3" type="audio/mpeg">
-    </audio>
-
-    <div class="content">
-        <h2 id="personalMessage" class="fade script-font"></h2>
-        <h1 class="title fade">RINNAH2026</h1>
-        <div class="tagline fade">He never leaves us</div>
-
-        <p class="desc fade">
-            Come and join us for a powerful night of worship as we lift the name of Jesus together.
-            Experience new melodies, fresh songs, and a deep atmosphere filled with His presence.
-            Feel the rhythm, embrace the moment, and let every sound draw you closer to Him.
-        </p>
-
-        <div class="details fade">
-            📅 Sunday, May 31<br>
-            🕓 Doors Open: 4:30 PM<br>
-            🎶 Starts: 5:00 PM<br>
-            📍 Drum Theatre, Dandenong
+    <section id="invitePage" class="page">
+        <div class="overlay"></div>
+        <div class="content">
+            <h1 class="glow-text">You’re Invited</h1>
+            <h2 id="guestDisplayName" class="script-font">Dear Guest</h2>
+            <p class="instruction">We have a special message waiting for you.</p>
+            <button class="primary-btn" onclick="openEvent()">Open Invitation</button>
         </div>
+    </section>
 
-        <div class="buttons fade">
-            <button onclick="openMap()">📍 Location</button>
-            <button onclick="openParking()">🚗 Parking</button>
+    <section id="eventPage" class="page hidden">
+        <div class="overlay"></div>
+        
+        <audio id="bgMusic" loop>
+            <source src="music.mp3" type="audio/mpeg">
+        </audio>
+
+        <div class="content scrollable">
+            <h2 id="personalMessage" class="script-font fade-in">Welcome</h2>
+            <h1 class="event-title fade-in">RINNAH 2026</h1>
+            <p class="tagline fade-in">"He never leaves us"</p>
+            
+            <div class="event-desc fade-in">
+                <p>Come and join us for a powerful night of worship as we lift the name of Jesus together.</p>
+                <p>Experience new melodies, fresh songs, and a deep atmosphere filled with His presence.</p>
+            </div>
+
+            <div class="event-details fade-in">
+                <p><strong>📅 Sunday, May 31</strong></p>
+                <p>🕓 Doors Open: 4:30 PM | Starts: 5:00 PM</p>
+                <p>📍 Drum Theatre, Dandenong</p>
+            </div>
+
+            <div class="button-group fade-in">
+                <button class="nav-btn" onclick="openMap()">📍 Location</button>
+                <button class="rsvp-btn" id="rsvpBtn" onclick="handleRSVP()">✍️ RSVP Now</button>
+                <button class="nav-btn" onclick="openParking()">🚗 Parking</button>
+            </div>
+        </div>
+    </section>
+
+    <div id="rsvpModal" class="modal hidden">
+        <div class="modal-overlay" onclick="closeModal()"></div>
+        <div class="modal-card">
+            <h2 class="script-font">RSVP</h2>
+            <p>How many people are coming?</p>
+            
+            <div class="counter-container">
+                <button class="counter-btn" onclick="changeHeads(-1)">−</button>
+                <span id="headsDisplay">1</span>
+                <button class="counter-btn" onclick="changeHeads(1)">+</button>
+            </div>
+
+            <button id="submitRsvpBtn" class="confirm-btn" onclick="submitToLambda()">Confirm Attendance</button>
+            <button class="close-link" onclick="closeModal()">Cancel</button>
         </div>
     </div>
-</div>
 
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

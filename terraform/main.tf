@@ -1,39 +1,25 @@
-# Default Provider for Sydney
 provider "aws" {
   region = "ap-southeast-2"
 }
 
-# Provider for ACM Certificate (Must be in N. Virginia for CloudFront)
-provider "aws" {
-  alias  = "us_east_1"
-  region = "us-east-1"
-}
-
-# --- S3 BUCKET ---
+# --- 1. S3 BUCKET FOR STATIC WEBSITE ---
 resource "aws_s3_bucket" "rinnah_bucket" {
   bucket = "rinnah-2026-portal"
 }
 
-resource "aws_s3_bucket_website_configuration" "website" {
+resource "aws_s3_bucket_website_configuration" "web_config" {
   bucket = aws_s3_bucket.rinnah_bucket.id
-  index_document { suffix = "index.html" }
+  index_document {
+    suffix = "index.html"
+  }
 }
 
-# --- PUBLIC ACCESS & POLICY ---
-resource "aws_s3_bucket_public_access_block" "public" {
-  bucket = aws_s3_bucket.rinnah_bucket.id
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
-
-resource "aws_s3_bucket_policy" "allow_public" {
+resource "aws_s3_bucket_policy" "public_read_policy" {
   bucket = aws_s3_bucket.rinnah_bucket.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Sid       = "PublicRead"
+      Sid       = "PublicReadGetObject"
       Effect    = "Allow"
       Principal = "*"
       Action    = "s3:GetObject"
@@ -42,63 +28,99 @@ resource "aws_s3_bucket_policy" "allow_public" {
   })
 }
 
-# --- ACM SSL CERTIFICATE ---
-# Note: This uses the default CloudFront cert if you don't provide a domain.
-# If you have a domain, uncomment the lines below and update domain_name.
-/*
-resource "aws_acm_certificate" "cert" {
-  provider          = aws.us_east_1
-  domain_name       = "your-domain.com"
-  validation_method = "DNS"
-  lifecycle { create_before_destroy = true }
-}
-*/
-
-# --- CLOUDFRONT (HTTPS) ---
-resource "aws_cloudfront_distribution" "s3_distribution" {
-  origin {
-    domain_name = aws_s3_bucket.rinnah_bucket.bucket_regional_domain_name
-    origin_id   = "S3-RINNAH"
-  }
-
-  enabled             = true
-  is_ipv6_enabled     = true
-  default_root_object = "index.html"
-
-  default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "S3-RINNAH"
-
-    forwarded_values {
-      query_string = true # REQUIRED to keep your ?id=1 parameter working
-      cookies { forward = "none" }
-    }
-
-    viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 86400
-  }
-
-  restrictions {
-    geo_restriction { restriction_type = "none" }
-  }
-
-  viewer_certificate {
-    cloudfront_default_certificate = true # Uses *.cloudfront.net HTTPS
-    # If using custom domain:
-    # acm_certificate_arn = aws_acm_certificate.cert.arn
-    # ssl_support_method  = "sni-only"
-  }
+# --- 2. LAMBDA FUNCTION ---
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_file = "${path.module}/lambda_function.py"
+  output_path = "${path.module}/lambda_function.zip"
 }
 
-# --- OUTPUTS ---
-output "s3_url" {
-  value = aws_s3_bucket_website_configuration.website.website_endpoint
+resource "aws_lambda_function" "rsvp_lambda" {
+  filename         = data.archive_file.lambda_zip.output_path
+  function_name    = "rinnah-rsvp-handler"
+  role             = aws_iam_role.lambda_exec_role.arn
+  handler          = "lambda_function.lambda_handler"
+  runtime          = "python3.12"
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 }
 
-output "secure_url" {
-  description = "Use this URL for HTTPS"
-  value       = "https://${aws_cloudfront_distribution.s3_distribution.domain_name}"
+# --- 3. IAM ROLE FOR LAMBDA ---
+resource "aws_iam_role" "lambda_exec_role" {
+  name = "rinnah_lambda_execution_role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "lambda.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "lambda_s3_access" {
+  role = aws_iam_role.lambda_exec_role.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject"]
+        Resource = "${aws_s3_bucket.rinnah_bucket.arn}/*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+        Resource = "arn:aws:logs:*:*:*"
+      }
+    ]
+  })
+}
+
+# --- 4. API GATEWAY (HTTP API) ---
+resource "aws_apigatewayv2_api" "rsvp_api" {
+  name          = "rinnah-rsvp-api"
+  protocol_type = "HTTP"
+  cors_configuration {
+    allow_origins = ["*"]
+    allow_methods = ["POST", "OPTIONS"]
+    allow_headers = ["content-type"]
+  }
+}
+
+resource "aws_apigatewayv2_integration" "lambda_integration" {
+  api_id           = aws_apigatewayv2_api.rsvp_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.rsvp_lambda.invoke_arn
+}
+
+resource "aws_apigatewayv2_route" "rsvp_route" {
+  api_id    = aws_apigatewayv2_api.rsvp_api.id
+  route_key = "POST /rsvp"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
+resource "aws_apigatewayv2_stage" "prod_stage" {
+  api_id      = aws_apigatewayv2_api.rsvp_api.id
+  name        = "$default"
+  auto_deploy = true
+}
+
+resource "aws_lambda_permission" "allow_api_gateway" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.rsvp_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.rsvp_api.execution_arn}/*/*"
+}
+
+# --- 5. OUTPUTS ---
+output "website_endpoint" {
+  value = aws_s3_bucket_website_configuration.web_config.website_endpoint
+}
+
+output "rsvp_api_endpoint" {
+  value = "${aws_apigatewayv2_api.rsvp_api.api_endpoint}/rsvp"
 }

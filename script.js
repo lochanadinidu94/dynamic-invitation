@@ -1,86 +1,137 @@
 /**
- * RINNAH 2026 - Invitation Portal Logic
- * Handles: CSV Parsing, Music Playback, and Page Transitions
+ * RINNAH 2026 - Main Script
  */
 
-// Function to handle the transition from Page 1 to Page 2
-function openEvent() {
-    const invitePage = document.getElementById('invitePage');
-    const eventPage = document.getElementById('eventPage');
-    const music = document.getElementById('bgMusic');
+let currentGuest = null;
+let headsValue = 1;
 
-    // 1. Hide the Welcome Page and show the Event Page
-    invitePage.classList.add('hidden');
-    eventPage.classList.remove('hidden');
-
-    // 2. Play Background Music
-    // Browsers require a user click (interaction) before audio can play.
-    // This button click serves as that interaction.
-    if (music) {
-        music.play().catch(error => {
-            console.error("Music playback failed. Browser might be blocking audio:", error);
-        });
-    }
-}
-
-// Logic to execute as soon as the window loads
+// --- INITIALIZATION ---
 window.onload = function() {
-    // 1. Get the 'id' parameter from the URL (e.g., index.html?id=4)
     const urlParams = new URLSearchParams(window.location.search);
     const guestId = urlParams.get('id');
 
-    // 2. If an ID exists, fetch the guest details from the CSV
     if (guestId) {
-        Papa.parse("guests.csv", {
-            download: true,
-            header: true,
-            complete: function(results) {
-                // Find the row where the ID matches the URL parameter
-                const guest = results.data.find(row => row.ID === guestId);
-
-                if (guest) {
-                    // Update Page 1 (The elegant welcome script)
-                    const firstPageName = document.getElementById('guestDisplayName');
-                    if (firstPageName) {
-                        firstPageName.innerText = guest.Name;
-                    }
-
-                    // Update Page 2 (The message above the title)
-                    const secondPageName = document.getElementById('personalMessage');
-                    if (secondPageName) {
-                        secondPageName.innerText = "Welcome, " + guest.Name;
-                    }
-                } else {
-                    console.warn("Guest ID not found in CSV. Using default text.");
-                    setDefaultNames();
-                }
-            },
-            error: function(err) {
-                console.error("Error parsing CSV file:", err);
-                setDefaultNames();
-            }
-        });
+        fetchGuestData(guestId);
     } else {
-        // Fallback if no ID is provided in the URL
-        setDefaultNames();
+        console.log("No Guest ID found in URL.");
     }
 };
 
-// Fallback function for default text
-function setDefaultNames() {
-    const p1 = document.getElementById('guestDisplayName');
-    const p2 = document.getElementById('personalMessage');
-    if (p1) p1.innerText = "Beloved Guest";
-    if (p2) p2.innerText = "Welcome";
+async function fetchGuestData(id) {
+    Papa.parse("guests.csv", {
+        download: true,
+        header: true,
+        complete: function(results) {
+            currentGuest = results.data.find(row => row.ID === id);
+            
+            if (currentGuest) {
+                updateUIWithGuest(currentGuest);
+            }
+        },
+        error: function(err) {
+            console.error("Error loading CSV:", err);
+        }
+    });
 }
 
-// Navigation Functions
+function updateUIWithGuest(guest) {
+    // Update Page 1 Name
+    document.getElementById('guestDisplayName').innerText = guest.Name;
+    
+    // Update Page 2 Personal Greeting
+    document.getElementById('personalMessage').innerText = "Welcome, " + guest.Name;
+    
+    // Update RSVP Button state
+    if (guest.RSVP === "Done") {
+        const btn = document.getElementById('rsvpBtn');
+        btn.innerText = "✅ RSVP'd: " + guest.Heads + " Seats";
+        headsValue = parseInt(guest.Heads);
+    }
+}
+
+// --- NAVIGATION & ANIMATION ---
+function openEvent() {
+    const music = document.getElementById('bgMusic');
+    
+    document.getElementById('invitePage').classList.add('hidden');
+    document.getElementById('eventPage').classList.remove('hidden');
+    
+    if (music) {
+        music.play().catch(e => console.log("Autoplay prevented:", e));
+    }
+}
+
+// --- RSVP MODAL LOGIC ---
+function handleRSVP() {
+    if (!currentGuest) return;
+    document.getElementById('headsDisplay').innerText = headsValue;
+    document.getElementById('rsvpModal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('rsvpModal').classList.add('hidden');
+}
+
+function changeHeads(delta) {
+    headsValue += delta;
+    if (headsValue < 1) headsValue = 1;
+    if (headsValue > 10) headsValue = 10;
+    document.getElementById('headsDisplay').innerText = headsValue;
+}
+
+// --- LAMBDA API CALL ---
+async function submitToLambda() {
+    const submitBtn = document.getElementById('submitRsvpBtn');
+    
+    // 1. Setup UI for loading
+    submitBtn.innerText = "Saving your spot...";
+    submitBtn.disabled = true;
+
+    try {
+        // IMPORTANT: Paste your output 'rsvp_api_endpoint' here
+        const API_URL = "https://your-api-id.execute-api.ap-southeast-2.amazonaws.com/rsvp";
+
+        const payload = {
+            id: currentGuest.ID,
+            heads: headsValue
+        };
+
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            alert("Praise God! We have received your RSVP.");
+            closeModal();
+            
+            // Update the main page button
+            const mainRsvpBtn = document.getElementById('rsvpBtn');
+            mainRsvpBtn.innerText = "✅ RSVP'd: " + headsValue + " Seats";
+            
+            // Update local memory
+            currentGuest.RSVP = "Done";
+            currentGuest.Heads = headsValue;
+        } else {
+            throw new Error("Server responded with error");
+        }
+
+    } catch (error) {
+        console.error("RSVP Error:", error);
+        alert("Something went wrong. Please try again or contact the organizer.");
+        submitBtn.innerText = "Confirm Attendance";
+        submitBtn.disabled = false;
+    }
+}
+
+// --- EXTERNAL LINKS ---
 function openMap() {
-    // Replace with your actual Drum Theatre Google Maps link
-    window.open("https://www.google.com/maps/search/?api=1&query=Drum+Theatre+Dandenong", "_blank");
+    window.open("https://maps.google.com/?q=Drum+Theatre+Dandenong", "_blank");
 }
 
 function openParking() {
-    // Standard alert or could be a link to a parking map PDF/image
-    alert("Parking Information:\n\nFree parking is available at the Drum Theatre multi-deck car park (off Walker Street) after 4:00 PM on Sunday.");
+    alert("Free parking is available at the Drum Theatre multi-deck car park (off Walker St) after 4:00 PM.");
 }
