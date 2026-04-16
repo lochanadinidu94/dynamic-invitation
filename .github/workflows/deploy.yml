@@ -29,6 +29,7 @@ jobs:
         run: |
           terraform import aws_s3_bucket.rinnah_bucket rinnah-2026-portal || echo "S3 already imported"
           terraform import aws_iam_role.lambda_exec_role rinnah_lambda_execution_role || echo "Role already imported"
+          terraform import aws_lambda_function.rsvp_lambda rinnah-rsvp-handler || echo "Lambda already imported"
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
