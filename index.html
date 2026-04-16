@@ -3,33 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RINNAH 2026 Invitation</title>
+    <title>RINNAH2026</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
 </head>
 <body>
 
-    <div id="door-container" class="door-wrapper">
-        <div class="door left-door"></div>
-        <div class="door right-door"></div>
-        <div class="door-content">
-            <h1 class="logo-text">RINNAH 2026</h1>
-            <p>A Heavenly Night of Worship</p>
-            <button onclick="openDoor()" class="open-btn">OPEN INVITATION</button>
+<div id="invitePage" class="page">
+    <div class="overlay"></div>
+    <div class="content">
+        <h1 class="glow">You’re Invited</h1>
+        <p style="margin-bottom: 10px; color: #ddd;">Please enter your name to reveal your invitation</p>
+        <input type="text" id="nameInput" placeholder="Enter your name">
+        <br>
+        <button onclick="openEvent()">Open Invitation</button>
+    </div>
+</div>
+
+<div id="eventPage" class="page hidden">
+    <div class="overlay"></div>
+
+    <audio id="bgMusic" loop>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="content">
+        <h2 id="personalMessage" class="fade"></h2>
+        <h1 class="title fade">RINNAH2026</h1>
+        <div class="tagline fade">He never leaves us</div>
+
+        <p class="desc fade">
+            Come and join us for a powerful night of worship as we lift the name of Jesus together.
+            Experience new melodies, fresh songs, and a deep atmosphere filled with His presence.
+            Feel the rhythm, embrace the moment, and let every sound draw you closer to Him.
+        </p>
+
+        <div class="details fade">
+            📅 Sunday, May 31<br>
+            🕓 Doors Open: 4:30 PM<br>
+            🎶 Starts: 5:00 PM<br>
+            📍 Drum Theatre, Dandenong
+        </div>
+
+        <div class="buttons fade">
+            <button onclick="openMap()">📍 Location</button>
+            <button onclick="openParking()">🚗 Parking</button>
         </div>
     </div>
+</div>
 
-    <main id="invitation-page" class="hidden">
-        <div class="card">
-            <p style="text-transform: uppercase; letter-spacing: 2px;">Welcome</p>
-            <h1 id="guest-name">Loading Guest...</h1>
-            <div class="details">
-                <p>We are honored to invite you to the<br><strong>RINNAH Christian Music Concert</strong></p>
-                <p>📍 Melbourne Grand Hall<br>📅 Sept 12, 2026 | 6:00 PM</p>
-            </div>
-        </div>
-    </main>
-
-    <script src="script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
