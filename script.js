@@ -81,9 +81,19 @@ function closeModal() {
 }
 
 function adjustHeads(amount) {
+    console.log("Invoking Adjust Heads:....");
+    // 1. Update the numerical value in memory
     headsValue = Math.max(1, Math.min(10, headsValue + amount));
-    // Update the number in the popup
-    document.getElementById('headsDisplay').innerText = headsValue;
+    
+    // 2. Find the span element by ID
+    const display = document.getElementById('headsDisplay');
+    console.log("Found display element: ", display);
+    
+    // 3. Update the text inside that span
+    if (display) {
+        display.innerText = headsValue;
+        console.log("Updated display to: " + headsValue); // For debugging
+    }
 }
 
 async function submitToLambda() {
