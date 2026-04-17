@@ -17,16 +17,12 @@ window.onload = function() {
 };
 
 function loadGuestData(id) {
-    // FORCE LATEST DATA: Cache Buster prevents browser from using old CSV versions
     const cacheBuster = "?v=" + new Date().getTime();
-    
     Papa.parse("guests.csv" + cacheBuster, {
         download: true,
         header: true,
         complete: function(results) {
-            // Find guest by ID
             currentGuest = results.data.find(row => row.ID.trim() === id.trim());
-            
             if (currentGuest) {
                 updateUI(currentGuest);
             }
@@ -38,7 +34,7 @@ function updateUI(guest) {
     document.getElementById('guestDisplayName').innerText = guest.Name;
     document.getElementById('personalMessage').innerText = "Welcome, " + guest.Name;
     
-    // CHECK RSVP STATUS: If "Done", lock the button immediately
+    // Check if guest has already RSVP'd
     if (guest.RSVP && guest.RSVP.trim().toLowerCase() === "done") {
         headsValue = parseInt(guest.Heads) || 1;
         lockRSVPButton(headsValue);
@@ -61,7 +57,6 @@ function lockRSVPButton(heads) {
 function openEvent() {
     document.getElementById('invitePage').classList.add('hidden');
     document.getElementById('eventPage').classList.remove('hidden');
-    
     const music = document.getElementById('bgMusic');
     if (music) {
         music.play().catch(e => console.log("Audio play blocked."));
@@ -71,7 +66,6 @@ function openEvent() {
 // --- MODAL & RSVP LOGIC ---
 function handleRSVP() {
     if (!currentGuest) return;
-    // Set the display to current headsValue before showing modal
     document.getElementById('headsDisplay').innerText = headsValue;
     document.getElementById('rsvpModal').classList.remove('hidden');
 }
@@ -81,18 +75,11 @@ function closeModal() {
 }
 
 function adjustHeads(amount) {
-    console.log("Invoking Adjust Heads:....");
-    // 1. Update the numerical value in memory
+    // Clamp values between 1 and 10
     headsValue = Math.max(1, Math.min(10, headsValue + amount));
-    
-    // 2. Find the span element by ID
     const display = document.getElementById('headsDisplay');
-    console.log("Found display element: ", display);
-    
-    // 3. Update the text inside that span
     if (display) {
         display.innerText = headsValue;
-        console.log("Updated display to: " + headsValue); // For debugging
     }
 }
 
@@ -103,7 +90,6 @@ async function submitToLambda() {
 
     try {
         const API_URL = "https://x0p16znd81.execute-api.ap-southeast-2.amazonaws.com/rsvp";
-
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -129,5 +115,5 @@ async function submitToLambda() {
     }
 }
 
-function openMap() { window.open("https://maps.google.com/?q=Drum+Theatre+Dandenong", "_blank"); }
+function openMap() { window.open("https://www.google.com/maps?q=Drum+Theatre+Dandenong", "_blank"); }
 function openParking() { alert("Free parking available at the Drum Theatre multi-deck after 4 PM."); }
