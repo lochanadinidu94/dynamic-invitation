@@ -1,19 +1,22 @@
 /**
- * RINNAH 2026 - Invitation & RSVP Logic
+ * RINNAH 2026 - Global RSVP Script
  */
 
+// State variables
 let currentGuest = null;
 let headsValue = 1;
 
+// --- INITIAL LOAD ---
 window.onload = function() {
+    console.log("Page Loaded. Initializing...");
     const urlParams = new URLSearchParams(window.location.search);
     const guestId = urlParams.get('id');
 
     if (guestId) {
         loadGuestData(guestId);
     } else {
-        const display = document.getElementById('guestDisplayName');
-        if (display) display.innerText = "Beloved Guest";
+        const nameDisplay = document.getElementById('guestDisplayName');
+        if (nameDisplay) nameDisplay.innerText = "Beloved Guest";
     }
 };
 
@@ -23,9 +26,14 @@ function loadGuestData(id) {
         download: true,
         header: true,
         complete: function(results) {
-            currentGuest = results.data.find(row => row.ID && row.ID.trim() === id.trim());
+            // Safety check for ID
+            currentGuest = results.data.find(row => row.ID && row.ID.toString().trim() === id.trim());
+            
             if (currentGuest) {
+                console.log("Guest Found:", currentGuest.Name);
                 updateUI(currentGuest);
+            } else {
+                console.error("Guest ID not found in CSV");
             }
         }
     });
@@ -54,14 +62,16 @@ function lockRSVPButton(heads) {
     }
 }
 
-function openEvent() {
+// --- EXPLICIT GLOBAL FUNCTIONS ---
+// We attach these to 'window' so index.html can always find them
+
+window.openEvent = function() {
     document.getElementById('invitePage').classList.add('hidden');
     document.getElementById('eventPage').classList.remove('hidden');
     const music = document.getElementById('bgMusic');
-    if (music) music.play().catch(e => console.log("Audio blocked."));
-}
+    if (music) music.play().catch(e => console.warn("Audio blocked by browser."));
+};
 
-// --- GLOBAL FUNCTIONS ---
 window.handleRSVP = function() {
     if (!currentGuest) return;
     const display = document.getElementById('headsDisplay');
@@ -83,6 +93,8 @@ window.adjustHeads = function(amount) {
 
 window.submitToLambda = async function() {
     const confirmBtn = document.getElementById('submitRsvpBtn');
+    if (!confirmBtn) return;
+    
     confirmBtn.innerText = "Saving...";
     confirmBtn.disabled = true;
 
@@ -107,11 +119,12 @@ window.submitToLambda = async function() {
             throw new Error("Server error");
         }
     } catch (err) {
-        alert("Failed to save RSVP.");
+        console.error("Submission error:", err);
+        alert("Failed to save RSVP. Please try again.");
         confirmBtn.innerText = "Confirm Attendance";
         confirmBtn.disabled = false;
     }
 };
 
 window.openMap = function() { window.open("https://maps.google.com", "_blank"); };
-window.openParking = function() { alert("Free parking available after 4 PM."); };
+window.openParking = function() { alert("Free parking available at the Drum Theatre multi-deck after 4 PM."); };
