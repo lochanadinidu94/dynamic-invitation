@@ -44,7 +44,7 @@ jobs:
             --exclude "terraform/*" \
             --exclude ".git/*" \
             --exclude ".github/*" \
-            # --exclude "guests.csv" #exclude the CSV file to prevent overwriting with an empty file
+            --exclude "guests.csv" #exclude the CSV file to prevent overwriting with an empty file
 
       - name: Invalidate CloudFront Cache
         run: |
