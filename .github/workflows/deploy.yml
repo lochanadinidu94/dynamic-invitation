@@ -24,17 +24,7 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      # No more import steps needed! Terraform now uses the S3 state file.
-
-      - name: Terraform Import (Final Sync)
-        run: |
-          # Import the Route (Format: api_id/route_id)
-          # We check the API first to get the route if possible, or force import
-          terraform import aws_apigatewayv2_route.rsvp_route x0p16znd81/$(aws apigatewayv2 get-routes --api-id x0p16znd81 --query "Items[?RouteKey=='POST /rsvp'].RouteId" --output text) || echo "Route already in state"
-          
-          # Import the Lambda Permission
-          terraform import aws_lambda_permission.allow_api rinnah-rsvp-handler/AllowExecutionFromAPIGateway || echo "Permission already in state"
-
+      # CLEANUP: Imports are removed because your state is now fully synced in S3
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
@@ -44,9 +34,6 @@ jobs:
             --exclude "terraform/*" \
             --exclude ".git/*" \
             --exclude ".github/*" \
-            --exclude "guests.csv" #exclude the CSV file to prevent overwriting with an empty file
+            --exclude "guests.csv" 
 
-      - name: Invalidate CloudFront Cache
-        run: |
-          # Replace YOUR_DISTRIBUTION_ID with your actual CloudFront ID
-          aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --paths "/*"
+      # CLEANUP: Removed the invalidation step that was causing the exit code 254
