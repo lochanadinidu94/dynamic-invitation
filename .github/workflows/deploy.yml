@@ -24,14 +24,16 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Import (One-time Sync to Backend)
-        run: |
-          terraform import aws_s3_bucket.rinnah_bucket rinnah-2026-portal || echo "S3 already in state"
-          terraform import aws_iam_role.lambda_exec_role rinnah_lambda_execution_role || echo "Role already in state"
-          # Adding the Lambda import below:
-          terraform import aws_lambda_function.rsvp_lambda rinnah-rsvp-handler || echo "Lambda already in state"
-          # Adding the API Gateway import:
-          terraform import aws_apigatewayv2_api.rsvp_api x0p16znd81 || echo "API Gateway already in state"
+      # No more import steps needed! Terraform now uses the S3 state file.
+
+      # - name: Terraform Import (One-time Sync to Backend)
+      #   run: |
+      #     terraform import aws_s3_bucket.rinnah_bucket rinnah-2026-portal || echo "S3 already in state"
+      #     terraform import aws_iam_role.lambda_exec_role rinnah_lambda_execution_role || echo "Role already in state"
+      #     # Adding the Lambda import below:
+      #     terraform import aws_lambda_function.rsvp_lambda rinnah-rsvp-handler || echo "Lambda already in state"
+      #     # Adding the API Gateway import:
+      #     terraform import aws_apigatewayv2_api.rsvp_api x0p16znd81 || echo "API Gateway already in state"
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
