@@ -121,3 +121,22 @@ async function submitToLambda() {
 // Map & Parking helpers
 function openMap() { window.open("https://maps.google.com/?q=Drum+Theatre+Dandenong", "_blank"); }
 function openParking() { alert("Free parking available at the Drum Theatre multi-deck after 4 PM."); }
+
+
+// --- MODAL & RSVP LOGIC ---
+function handleRSVP() {
+    if (!currentGuest) return;
+    // Fix: Match the ID from index.html (headsDisplay)
+    document.getElementById('headsDisplay').innerText = headsValue;
+    document.getElementById('rsvpModal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('rsvpModal').classList.add('hidden');
+}
+
+function adjustHeads(amount) {
+    headsValue = Math.max(1, Math.min(10, headsValue + amount));
+    // Fix: Match the ID from index.html (headsDisplay)
+    document.getElementById('headsDisplay').innerText = headsValue;
+}
