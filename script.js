@@ -1,41 +1,20 @@
 /**
- * RINNAH 2026 - Global RSVP Script
+ * RINNAH 2026 - Production Script
  */
 
-// State variables
 let currentGuest = null;
 let headsValue = 1;
 
-// --- INITIAL LOAD ---
-window.adjustHeads = function(amount) {
-    // 1. Update the numerical value in memory (the brain)
-    headsValue = Math.max(1, Math.min(10, headsValue + amount));
-    
-    // 2. Update the number in the popup (the eyes)
-    const display = document.getElementById('headsDisplay');
-    
-    if (display) {
-        display.innerText = headsValue;
-        // This makes sure the UI updates IMMEDIATELY while the popup is open
-    } else {
-        console.error("Critical Error: Could not find id='headsDisplay' in the HTML.");
-    }
-};
-
+// --- CORE DATA LOADING ---
 function loadGuestData(id) {
     const cacheBuster = "?v=" + new Date().getTime();
     Papa.parse("guests.csv" + cacheBuster, {
         download: true,
         header: true,
         complete: function(results) {
-            // Safety check for ID
-            currentGuest = results.data.find(row => row.ID && row.ID.toString().trim() === id.trim());
-            
+            currentGuest = results.data.find(row => row.ID && row.ID.trim() === id.trim());
             if (currentGuest) {
-                console.log("Guest Found:", currentGuest.Name);
                 updateUI(currentGuest);
-            } else {
-                console.error("Guest ID not found in CSV");
             }
         }
     });
@@ -59,19 +38,29 @@ function lockRSVPButton(heads) {
         btn.classList.add('btn-disabled');
         btn.style.backgroundColor = "#444";
         btn.style.color = "#888";
-        btn.style.cursor = "default";
         btn.style.pointerEvents = "none";
     }
 }
 
-// --- EXPLICIT GLOBAL FUNCTIONS ---
-// We attach these to 'window' so index.html can always find them
+// --- GLOBAL ATTACHMENTS (Prevents ReferenceError) ---
+
+window.onload = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const guestId = urlParams.get('id');
+
+    if (guestId) {
+        loadGuestData(guestId);
+    } else {
+        const display = document.getElementById('guestDisplayName');
+        if (display) display.innerText = "Beloved Guest";
+    }
+};
 
 window.openEvent = function() {
     document.getElementById('invitePage').classList.add('hidden');
     document.getElementById('eventPage').classList.remove('hidden');
     const music = document.getElementById('bgMusic');
-    if (music) music.play().catch(e => console.warn("Audio blocked by browser."));
+    if (music) music.play().catch(e => console.log("Audio blocked."));
 };
 
 window.handleRSVP = function() {
@@ -86,7 +75,9 @@ window.closeModal = function() {
 };
 
 window.adjustHeads = function(amount) {
+    // 1. Update variable
     headsValue = Math.max(1, Math.min(10, headsValue + amount));
+    // 2. Update UI immediately
     const display = document.getElementById('headsDisplay');
     if (display) {
         display.innerText = headsValue;
@@ -96,7 +87,7 @@ window.adjustHeads = function(amount) {
 window.submitToLambda = async function() {
     const confirmBtn = document.getElementById('submitRsvpBtn');
     if (!confirmBtn) return;
-    
+
     confirmBtn.innerText = "Saving...";
     confirmBtn.disabled = true;
 
@@ -121,12 +112,11 @@ window.submitToLambda = async function() {
             throw new Error("Server error");
         }
     } catch (err) {
-        console.error("Submission error:", err);
-        alert("Failed to save RSVP. Please try again.");
+        alert("Failed to save RSVP.");
         confirmBtn.innerText = "Confirm Attendance";
         confirmBtn.disabled = false;
     }
 };
 
 window.openMap = function() { window.open("https://maps.google.com", "_blank"); };
-window.openParking = function() { alert("Free parking available at the Drum Theatre multi-deck after 4 PM."); };
+window.openParking = function() { alert("Free parking available after 4 PM."); };
