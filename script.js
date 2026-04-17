@@ -7,16 +7,18 @@ let currentGuest = null;
 let headsValue = 1;
 
 // --- INITIAL LOAD ---
-window.onload = function() {
-    console.log("Page Loaded. Initializing...");
-    const urlParams = new URLSearchParams(window.location.search);
-    const guestId = urlParams.get('id');
-
-    if (guestId) {
-        loadGuestData(guestId);
+window.adjustHeads = function(amount) {
+    // 1. Update the numerical value in memory (the brain)
+    headsValue = Math.max(1, Math.min(10, headsValue + amount));
+    
+    // 2. Update the number in the popup (the eyes)
+    const display = document.getElementById('headsDisplay');
+    
+    if (display) {
+        display.innerText = headsValue;
+        // This makes sure the UI updates IMMEDIATELY while the popup is open
     } else {
-        const nameDisplay = document.getElementById('guestDisplayName');
-        if (nameDisplay) nameDisplay.innerText = "Beloved Guest";
+        console.error("Critical Error: Could not find id='headsDisplay' in the HTML.");
     }
 };
 
