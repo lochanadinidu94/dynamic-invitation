@@ -26,14 +26,14 @@ jobs:
 
       # No more import steps needed! Terraform now uses the S3 state file.
 
-      # - name: Terraform Import (One-time Sync to Backend)
-      #   run: |
-      #     terraform import aws_s3_bucket.rinnah_bucket rinnah-2026-portal || echo "S3 already in state"
-      #     terraform import aws_iam_role.lambda_exec_role rinnah_lambda_execution_role || echo "Role already in state"
-      #     # Adding the Lambda import below:
-      #     terraform import aws_lambda_function.rsvp_lambda rinnah-rsvp-handler || echo "Lambda already in state"
-      #     # Adding the API Gateway import:
-      #     terraform import aws_apigatewayv2_api.rsvp_api x0p16znd81 || echo "API Gateway already in state"
+      - name: Terraform Import (Final Sync)
+        run: |
+          # Import the Route (Format: api_id/route_id)
+          # We check the API first to get the route if possible, or force import
+          terraform import aws_apigatewayv2_route.rsvp_route x0p16znd81/$(aws apigatewayv2 get-routes --api-id x0p16znd81 --query "Items[?RouteKey=='POST /rsvp'].RouteId" --output text) || echo "Route already in state"
+          
+          # Import the Lambda Permission
+          terraform import aws_lambda_permission.allow_api rinnah-rsvp-handler/AllowExecutionFromAPIGateway || echo "Permission already in state"
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
