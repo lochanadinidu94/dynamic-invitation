@@ -28,7 +28,6 @@ function loadGuestData(id) {
             currentGuest = results.data.find(row => row.ID.trim() === id.trim());
             
             if (currentGuest) {
-                // IMMEDIATELY update UI and check RSVP status
                 updateUI(currentGuest);
             }
         }
@@ -39,7 +38,7 @@ function updateUI(guest) {
     document.getElementById('guestDisplayName').innerText = guest.Name;
     document.getElementById('personalMessage').innerText = "Welcome, " + guest.Name;
     
-    // CHECK RSVP STATUS: If "Done" or "done", lock the button immediately
+    // CHECK RSVP STATUS: If "Done", lock the button immediately
     if (guest.RSVP && guest.RSVP.trim().toLowerCase() === "done") {
         headsValue = parseInt(guest.Heads) || 1;
         lockRSVPButton(headsValue);
@@ -52,7 +51,6 @@ function lockRSVPButton(heads) {
         btn.innerText = `✅ RSVP'd: ${heads} Seats`;
         btn.disabled = true;
         btn.classList.add('btn-disabled');
-        // Explicitly set style in JS to ensure it overrides everything
         btn.style.backgroundColor = "#444";
         btn.style.color = "#888";
         btn.style.cursor = "default";
@@ -70,8 +68,10 @@ function openEvent() {
     }
 }
 
+// --- MODAL & RSVP LOGIC ---
 function handleRSVP() {
     if (!currentGuest) return;
+    // Set the display to current headsValue before showing modal
     document.getElementById('headsDisplay').innerText = headsValue;
     document.getElementById('rsvpModal').classList.remove('hidden');
 }
@@ -80,9 +80,10 @@ function closeModal() {
     document.getElementById('rsvpModal').classList.add('hidden');
 }
 
-function changeHeads(amount) {
+function adjustHeads(amount) {
     headsValue = Math.max(1, Math.min(10, headsValue + amount));
-    document.getElementById('headsCount').innerText = headsValue;
+    // Update the number in the popup
+    document.getElementById('headsDisplay').innerText = headsValue;
 }
 
 async function submitToLambda() {
@@ -118,25 +119,5 @@ async function submitToLambda() {
     }
 }
 
-// Map & Parking helpers
 function openMap() { window.open("https://maps.google.com/?q=Drum+Theatre+Dandenong", "_blank"); }
 function openParking() { alert("Free parking available at the Drum Theatre multi-deck after 4 PM."); }
-
-
-// --- MODAL & RSVP LOGIC ---
-function handleRSVP() {
-    if (!currentGuest) return;
-    // Fix: Match the ID from index.html (headsDisplay)
-    document.getElementById('headsDisplay').innerText = headsValue;
-    document.getElementById('rsvpModal').classList.remove('hidden');
-}
-
-function closeModal() {
-    document.getElementById('rsvpModal').classList.add('hidden');
-}
-
-function adjustHeads(amount) {
-    headsValue = Math.max(1, Math.min(10, headsValue + amount));
-    // Fix: Match the ID from index.html (headsDisplay)
-    document.getElementById('headsDisplay').innerText = headsValue;
-}
