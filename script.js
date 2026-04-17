@@ -19,7 +19,10 @@ window.onload = function() {
 
 // Fetch and Parse the CSV
 function loadGuestData(id) {
-    Papa.parse("guests.csv", {
+    // Adding ?t= + timestamp makes the URL unique every time the page loads
+    const cacheBuster = "?t=" + new Date().getTime();
+    
+    Papa.parse("guests.csv" + cacheBuster, {
         download: true,
         header: true,
         complete: function(results) {

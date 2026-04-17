@@ -43,4 +43,10 @@ jobs:
           aws s3 sync .. s3://rinnah-2026-portal --delete \
             --exclude "terraform/*" \
             --exclude ".git/*" \
-            --exclude ".github/*"
+            --exclude ".github/*" \
+            # --exclude "guests.csv" #exclude the CSV file to prevent overwriting with an empty file
+
+      - name: Invalidate CloudFront Cache
+        run: |
+          # Replace YOUR_DISTRIBUTION_ID with your actual CloudFront ID
+          aws cloudfront create-invalidation --distribution-id YOUR_DISTRIBUTION_ID --paths "/*"
