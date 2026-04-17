@@ -1,4 +1,4 @@
-name: Deploy to S3
+name: Deploy to AWS
 on:
   push:
     branches: [ main ]
@@ -9,7 +9,7 @@ jobs:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: 'ap-southeast-2' 
+      AWS_REGION: 'ap-southeast-2'
 
     defaults:
       run:
@@ -17,20 +17,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
 
       - name: Terraform Init
         run: terraform init
-
-      - name: Terraform Import (Fixes 409 Conflict)
-        # This tells Terraform: "I already own these, just manage them"
-        run: |
-          terraform import aws_s3_bucket.rinnah_bucket rinnah-2026-portal || echo "S3 already imported"
-          terraform import aws_iam_role.lambda_exec_role rinnah_lambda_execution_role || echo "Role already imported"
-          terraform import aws_lambda_function.rsvp_lambda rinnah-rsvp-handler || echo "Lambda already imported"
-          terraform import aws_lambda_permission.allow_api_gateway rinnah-rsvp-handler/AllowExecutionFromAPIGateway || echo "Permission already imported"
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
