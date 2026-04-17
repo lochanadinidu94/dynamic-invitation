@@ -199,3 +199,13 @@ button {
 .fade-in:nth-child(1) { animation-delay: 0.2s; }
 .fade-in:nth-child(2) { animation-delay: 0.4s; }
 .fade-in:nth-child(3) { animation-delay: 0.6s; }
+
+/* Styling for the disabled RSVP button */
+#rsvpBtn:disabled, .btn-disabled {
+    background: #444 !important; /* Gray color */
+    color: #888 !important;      /* Muted text */
+    border: 1px solid #555 !important;
+    box-shadow: none !important;
+    transform: none !important;  /* Stops the hover "pop" effect */
+    cursor: default !important;
+}

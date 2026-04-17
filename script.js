@@ -1,5 +1,5 @@
 /**
- * RINNAH 2026 - Main Script
+ * RINNAH 2026 - Invitation & RSVP Logic
  */
 
 let currentGuest = null;
@@ -11,13 +11,14 @@ window.onload = function() {
     const guestId = urlParams.get('id');
 
     if (guestId) {
-        fetchGuestData(guestId);
+        loadGuestData(guestId);
     } else {
-        console.log("No Guest ID found in URL.");
+        document.getElementById('guestDisplayName').innerText = "Beloved Guest";
     }
 };
 
-async function fetchGuestData(id) {
+// Fetch and Parse the CSV
+function loadGuestData(id) {
     Papa.parse("guests.csv", {
         download: true,
         header: true,
@@ -25,46 +26,49 @@ async function fetchGuestData(id) {
             currentGuest = results.data.find(row => row.ID === id);
             
             if (currentGuest) {
-                updateUIWithGuest(currentGuest);
+                updateUI(currentGuest);
             }
-        },
-        error: function(err) {
-            console.error("Error loading CSV:", err);
         }
     });
 }
 
-function updateUIWithGuest(guest) {
-    // Update Page 1 Name
+// Update UI and Check RSVP Status on Load
+function updateUI(guest) {
     document.getElementById('guestDisplayName').innerText = guest.Name;
-    
-    // Update Page 2 Personal Greeting
     document.getElementById('personalMessage').innerText = "Welcome, " + guest.Name;
     
-    // Update RSVP Button state
+    // IF ALREADY RSVP'D: Disable button immediately on load
     if (guest.RSVP === "Done") {
-        const btn = document.getElementById('rsvpBtn');
-        btn.innerText = "✅ RSVP'd: " + guest.Heads + " Seats";
-        headsValue = parseInt(guest.Heads);
+        headsValue = parseInt(guest.Heads) || 1;
+        lockRSVPButton(headsValue);
     }
 }
 
-// --- NAVIGATION & ANIMATION ---
+// --- HELPER: Lock Button ---
+function lockRSVPButton(heads) {
+    const btn = document.getElementById('rsvpBtn');
+    if (btn) {
+        btn.innerText = `✅ RSVP'd: ${heads} Seats`;
+        btn.disabled = true;
+        btn.classList.add('btn-disabled');
+    }
+}
+
+// --- NAVIGATION ---
 function openEvent() {
-    const music = document.getElementById('bgMusic');
-    
     document.getElementById('invitePage').classList.add('hidden');
     document.getElementById('eventPage').classList.remove('hidden');
     
+    const music = document.getElementById('bgMusic');
     if (music) {
-        music.play().catch(e => console.log("Autoplay prevented:", e));
+        music.play().catch(e => console.log("Music autoplay blocked."));
     }
 }
 
-// --- RSVP MODAL LOGIC ---
+// --- MODAL & RSVP LOGIC ---
 function handleRSVP() {
     if (!currentGuest) return;
-    document.getElementById('headsDisplay').innerText = headsValue;
+    document.getElementById('headsCount').innerText = headsValue;
     document.getElementById('rsvpModal').classList.remove('hidden');
 }
 
@@ -72,66 +76,55 @@ function closeModal() {
     document.getElementById('rsvpModal').classList.add('hidden');
 }
 
-function changeHeads(delta) {
-    headsValue += delta;
-    if (headsValue < 1) headsValue = 1;
-    if (headsValue > 10) headsValue = 10;
-    document.getElementById('headsDisplay').innerText = headsValue;
+function adjustHeads(amount) {
+    headsValue = Math.max(1, Math.min(10, headsValue + amount));
+    document.getElementById('headsCount').innerText = headsValue;
 }
 
-// --- LAMBDA API CALL ---
-async function submitToLambda() {
-    const submitBtn = document.getElementById('submitRsvpBtn');
-    
-    // 1. Setup UI for loading
-    submitBtn.innerText = "Saving your spot...";
-    submitBtn.disabled = true;
+// --- SEND TO LAMBDA ---
+async function submitRSVP() {
+    const confirmBtn = document.getElementById('confirmRsvpBtn');
+    confirmBtn.innerText = "Saving...";
+    confirmBtn.disabled = true;
 
     try {
-        // IMPORTANT: Paste your output 'rsvp_api_endpoint' here
+        // REPLACE with your solid Lambda URL from Terraform
         const API_URL = "https://x0p16znd81.execute-api.ap-southeast-2.amazonaws.com/rsvp";
-
-        const payload = {
-            id: currentGuest.ID,
-            heads: headsValue
-        };
 
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: currentGuest.ID,
+                heads: headsValue
+            })
         });
 
         if (response.ok) {
-            alert("Praise God! We have received your RSVP.");
+            alert("Thank you! Your RSVP is confirmed.");
             closeModal();
             
-            // Update the main page button
-            const mainRsvpBtn = document.getElementById('rsvpBtn');
-            mainRsvpBtn.innerText = "✅ RSVP'd: " + headsValue + " Seats";
+            // Lock the button after successful submission
+            lockRSVPButton(headsValue);
             
             // Update local memory
             currentGuest.RSVP = "Done";
             currentGuest.Heads = headsValue;
         } else {
-            throw new Error("Server responded with error");
+            throw new Error("Server error");
         }
-
-    } catch (error) {
-        console.error("RSVP Error:", error);
-        alert("Something went wrong. Please try again or contact the organizer.");
-        submitBtn.innerText = "Confirm Attendance";
-        submitBtn.disabled = false;
+    } catch (err) {
+        alert("Failed to save RSVP. Please check your connection.");
+        confirmBtn.innerText = "Confirm Attendance";
+        confirmBtn.disabled = false;
     }
 }
 
 // --- EXTERNAL LINKS ---
 function openMap() {
-    window.open("https://maps.google.com/?q=Drum+Theatre+Dandenong", "_blank");
+    window.open("https://www.google.com/maps/search/?api=1&query=Drum+Theatre+Dandenong", "_blank");
 }
 
 function openParking() {
-    alert("Free parking is available at the Drum Theatre multi-deck car park (off Walker St) after 4:00 PM.");
+    alert("Free parking is available at the Drum Theatre multi-deck car park after 4:00 PM.");
 }
