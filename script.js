@@ -12,7 +12,8 @@ window.onload = function() {
     if (guestId) {
         loadGuestData(guestId);
     } else {
-        document.getElementById('guestDisplayName').innerText = "Beloved Guest";
+        const display = document.getElementById('guestDisplayName');
+        if (display) display.innerText = "Beloved Guest";
     }
 };
 
@@ -22,7 +23,7 @@ function loadGuestData(id) {
         download: true,
         header: true,
         complete: function(results) {
-            currentGuest = results.data.find(row => row.ID.trim() === id.trim());
+            currentGuest = results.data.find(row => row.ID && row.ID.trim() === id.trim());
             if (currentGuest) {
                 updateUI(currentGuest);
             }
@@ -34,7 +35,6 @@ function updateUI(guest) {
     document.getElementById('guestDisplayName').innerText = guest.Name;
     document.getElementById('personalMessage').innerText = "Welcome, " + guest.Name;
     
-    // Check if guest has already RSVP'd
     if (guest.RSVP && guest.RSVP.trim().toLowerCase() === "done") {
         headsValue = parseInt(guest.Heads) || 1;
         lockRSVPButton(headsValue);
@@ -58,32 +58,30 @@ function openEvent() {
     document.getElementById('invitePage').classList.add('hidden');
     document.getElementById('eventPage').classList.remove('hidden');
     const music = document.getElementById('bgMusic');
-    if (music) {
-        music.play().catch(e => console.log("Audio play blocked."));
-    }
+    if (music) music.play().catch(e => console.log("Audio blocked."));
 }
 
-// --- MODAL & RSVP LOGIC ---
-function handleRSVP() {
+// --- GLOBAL FUNCTIONS ---
+window.handleRSVP = function() {
     if (!currentGuest) return;
-    document.getElementById('headsDisplay').innerText = headsValue;
+    const display = document.getElementById('headsDisplay');
+    if (display) display.innerText = headsValue;
     document.getElementById('rsvpModal').classList.remove('hidden');
-}
+};
 
-function closeModal() {
+window.closeModal = function() {
     document.getElementById('rsvpModal').classList.add('hidden');
-}
+};
 
-function adjustHeads(amount) {
-    // Clamp values between 1 and 10
+window.adjustHeads = function(amount) {
     headsValue = Math.max(1, Math.min(10, headsValue + amount));
     const display = document.getElementById('headsDisplay');
     if (display) {
         display.innerText = headsValue;
     }
-}
+};
 
-async function submitToLambda() {
+window.submitToLambda = async function() {
     const confirmBtn = document.getElementById('submitRsvpBtn');
     confirmBtn.innerText = "Saving...";
     confirmBtn.disabled = true;
@@ -101,7 +99,7 @@ async function submitToLambda() {
 
         if (response.ok) {
             alert("Thank you! Your RSVP is confirmed.");
-            closeModal();
+            window.closeModal();
             lockRSVPButton(headsValue);
             currentGuest.RSVP = "Done";
             currentGuest.Heads = headsValue;
@@ -113,7 +111,7 @@ async function submitToLambda() {
         confirmBtn.innerText = "Confirm Attendance";
         confirmBtn.disabled = false;
     }
-}
+};
 
-function openMap() { window.open("https://www.google.com/maps?q=Drum+Theatre+Dandenong", "_blank"); }
-function openParking() { alert("Free parking available at the Drum Theatre multi-deck after 4 PM."); }
+window.openMap = function() { window.open("https://maps.google.com", "_blank"); };
+window.openParking = function() { alert("Free parking available after 4 PM."); };
