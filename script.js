@@ -118,5 +118,6 @@ window.submitToLambda = async function() {
     }
 };
 
-window.openMap = function() { window.open("https://maps.google.com", "_blank"); };
-window.openParking = function() { alert("Free parking available after 4 PM."); };
+window.openMap = function() { window.open("https://www.google.com/maps/search/?api=1&query=Drum+Theatre+Dandenong", "_blank"); };
+window.openParking = function() { window.open("https://www.google.com/maps/search/?api=1&query=parking+near+Drum+Theatre+Dandenong", "_blank"); };
+// window.openParking = function() { alert("Free parking available after 4 PM."); };
