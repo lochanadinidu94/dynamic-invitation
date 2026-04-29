@@ -1,7 +1,7 @@
 ID,Name,Email,RSVP,Heads,Seats
-1,Ravindu Udara,john@example.com,Done,2,
+1,Ravindu Udara,john@example.com,,,
 2,Oshan Sameera,jane@example.com,,,
 3,Ramitha Pathirana,sam@example.com,,,
-4,Dinidu Lochana,dinidu.sense@gmail.com,Done,6,
-5,R.J. Moses,moses@test.com,Done,1,
-6,Malith Warnakulasuriya,malith@test.com,Done,2,
+4,Dinidu Lochana,dinidu.sense@gmail.com,,,
+5,R.J. Moses,moses@test.com,,,
+6,Malith Warnakulasuriya,malith@test.com,,,
