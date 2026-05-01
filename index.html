@@ -4,65 +4,102 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RINNAH 2026 | Invitation</title>
+
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    
-    <script src="script.js" defer></script>
 </head>
+
 <body>
 
-    <section id="invitePage" class="page">
-        <div class="overlay"></div>
-        <div class="content">
-            <h1 class="glow-text">You’re Invited</h1>
-            <h3 id="guestDisplayName" class="script-font">Dear Guest</h3>
-            <p class="instruction">We have a special message waiting for you.</p>
-            <button class="primary-btn" onclick="openEvent()">Open Invitation</button>
-        </div>
-    </section>
-
-    <section id="eventPage" class="page hidden">
-        <div class="overlay"></div>
-        <audio id="bgMusic" loop>
-            <source src="music.mp3" type="audio/mpeg">
-        </audio>
-        <div class="content scrollable">
-            <h3 id="personalMessage" class="script-font fade-in">Welcome</h3>
-            <h1 class="event-title fade-in">RINNAH 2026</h1>
-            <p class="tagline fade-in">"He never leaves us"</p>
-            <div class="event-desc fade-in">
-                <p>Come and join us for a powerful night of live music and inspiration as we lift the name of Jesus together. Your life will never be the same.</p>
-            </div>
-            <div class="event-details fade-in">
-                <p><strong>📅 Sunday, May 31</strong></p>
-                <p>🕓 4:30 PM | 📍 Drum Theatre, Dandenong</p>
-            </div>
-            <div class="button-group fade-in">
-                <button class="nav-btn" onclick="openMap()">📍 Location</button>
-                <button class="rsvp-btn" id="rsvpBtn" onclick="handleRSVP()">✍️ RSVP Now</button>
-                <button class="nav-btn" onclick="openParking()">🚗 Parking</button>
-            </div>
-        </div>
-    </section>
-
-    <div id="rsvpModal" class="modal hidden">
-        <div class="modal-overlay" onclick="closeModal()"></div>
-        <div class="modal-card">
-            <h2 class="script-font">RSVP</h2>
-            <p>How many people are coming?</p>
-            <div class="counter-container">
-                <button class="counter-btn" onclick="adjustHeads(-1)">−</button>
-                <span id="headsDisplay">1</span>
-                <button class="counter-btn" onclick="adjustHeads(1)">+</button>
-            </div>
-            <button id="submitRsvpBtn" class="confirm-btn" onclick="submitToLambda()">Confirm Attendance</button>
-            <button class="close-link" onclick="closeModal()">Cancel</button>
-        </div>
+<!-- INVITE PAGE -->
+<section id="invitePage" class="page">
+    <div class="overlay"></div>
+    <div class="content">
+        <h1 class="glow-text">You’re Invited</h1>
+        <h3 id="guestDisplayName" class="script-font">Dear Guest</h3>
+        <p>We have a special message waiting for you.</p>
+        <button class="primary-btn" onclick="openEvent()">Open Invitation</button>
     </div>
+</section>
+
+<!-- EVENT PAGE -->
+<section id="eventPage" class="page hidden">
+    <div class="overlay"></div>
+
+    <audio id="bgMusic" loop>
+        <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
+    <div class="content scrollable">
+
+        <!-- POSTER -->
+        <div class="poster-container">
+
+            <h2 id="personalMessage" class="script-font">Welcome</h2>
+
+            <h1 class="white poster-title">COME & JOIN US</h1>
+            <div class="small">for a</div>
+
+            <h1 class="red poster-title">POWERFUL NIGHT</h1>
+            <div class="small">of</div>
+
+            <h1 class="white poster-title">LIVE MUSIC</h1>
+            <div class="small">and</div>
+
+            <h1 class="blue poster-title">INSPIRATION</h1>
+
+            <div class="small">as we lift the name of</div>
+
+            <h1 class="red poster-title">JESUS</h1>
+
+            <div class="small">together</div>
+
+            <div class="footer">
+                YOUR LIFE WILL <span class="blue">NEVER BE THE SAME</span>
+            </div>
+
+            <div class="line"></div>
+
+        </div>
+
+        <!-- DETAILS -->
+        <div class="event-details">
+            <p><strong>📅 Sunday, May 31</strong></p>
+            <p>🕓 4:30 PM | 📍 Drum Theatre, Dandenong</p>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="button-group">
+            <button class="nav-btn" onclick="openMap()">📍 Location</button>
+            <button class="rsvp-btn" onclick="handleRSVP()">✍️ RSVP Now</button>
+            <button class="nav-btn" onclick="openParking()">🚗 Parking</button>
+        </div>
+
+    </div>
+</section>
+
+<!-- RSVP MODAL -->
+<div id="rsvpModal" class="modal hidden">
+    <div class="modal-overlay" onclick="closeModal()"></div>
+
+    <div class="modal-card">
+        <h2 class="script-font">RSVP</h2>
+        <p>How many people are coming?</p>
+
+        <div class="counter-container">
+            <button onclick="adjustHeads(-1)">−</button>
+            <span id="headsDisplay">1</span>
+            <button onclick="adjustHeads(1)">+</button>
+        </div>
+
+        <button class="confirm-btn" onclick="submitToLambda()">Confirm Attendance</button>
+        <span class="close-link" onclick="closeModal()">Cancel</span>
+    </div>
+</div>
+
+<script src="script.js"></script>
 
 </body>
 </html>
