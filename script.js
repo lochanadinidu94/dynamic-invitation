@@ -72,6 +72,7 @@ window.openEvent = function() {
 };
 
 window.handleRSVP = function() {
+    console.log("RSVP button clicked");
     if (!currentGuest) {
         alert("Guest data not loaded yet.");
         return;
