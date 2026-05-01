@@ -7,12 +7,17 @@ let headsValue = 1;
 
 // --- CORE DATA LOADING ---
 function loadGuestData(id) {
-    const cacheBuster = "?v=" + new Date().getTime();
-    Papa.parse("guests.csv" + cacheBuster, {
+    // Only use cache buster if you are NOT on a local file system
+    const isLocal = window.location.protocol === 'file:';
+    const csvUrl = isLocal ? "guests.csv" : "guests.csv?v=" + Date.now();
+
+    Papa.parse(csvUrl, {
         download: true,
         header: true,
         complete: function(results) {
-            currentGuest = results.data.find(row => row.ID && row.ID.trim() === id.trim());
+            currentGuest = results.data.find(row => 
+                row.ID && row.ID.toString().trim() === id.toString().trim()
+            );
             if (currentGuest) {
                 updateUI(currentGuest);
             }
@@ -21,9 +26,14 @@ function loadGuestData(id) {
 }
 
 function updateUI(guest) {
-    document.getElementById('guestDisplayName').innerText = guest.Name;
-    document.getElementById('personalMessage').innerText = "Welcome, " + guest.Name;
+    // Update labels
+    const displayElement = document.getElementById('guestDisplayName');
+    const personalMsgElement = document.getElementById('personalMessage');
+
+    if (displayElement) displayElement.innerText = guest.Name;
+    if (personalMsgElement) personalMsgElement.innerText = "Welcome, " + guest.Name;
     
+    // Check if they already RSVP'd
     if (guest.RSVP && guest.RSVP.trim().toLowerCase() === "done") {
         headsValue = parseInt(guest.Heads) || 1;
         lockRSVPButton(headsValue);
@@ -36,13 +46,12 @@ function lockRSVPButton(heads) {
         btn.innerText = `✅ RSVP'd: ${heads} Seats`;
         btn.disabled = true;
         btn.classList.add('btn-disabled');
-        btn.style.backgroundColor = "#444";
-        btn.style.color = "#888";
-        btn.style.pointerEvents = "none";
+        btn.style.background = "#444";
+        btn.style.cursor = "default";
     }
 }
 
-// --- GLOBAL ATTACHMENTS (Prevents ReferenceError) ---
+// --- EVENT HANDLERS ---
 
 window.onload = function() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -51,8 +60,7 @@ window.onload = function() {
     if (guestId) {
         loadGuestData(guestId);
     } else {
-        const display = document.getElementById('guestDisplayName');
-        if (display) display.innerText = "Beloved Guest";
+        console.log("No ID provided in URL.");
     }
 };
 
@@ -60,13 +68,15 @@ window.openEvent = function() {
     document.getElementById('invitePage').classList.add('hidden');
     document.getElementById('eventPage').classList.remove('hidden');
     const music = document.getElementById('bgMusic');
-    if (music) music.play().catch(e => console.log("Audio blocked."));
+    if (music) music.play().catch(() => console.log("Audio autoplay blocked by browser."));
 };
 
 window.handleRSVP = function() {
-    if (!currentGuest) return;
-    const display = document.getElementById('headsDisplay');
-    if (display) display.innerText = headsValue;
+    if (!currentGuest) {
+        alert("Guest data not loaded yet.");
+        return;
+    }
+    document.getElementById('headsDisplay').innerText = headsValue;
     document.getElementById('rsvpModal').classList.remove('hidden');
 };
 
@@ -75,19 +85,12 @@ window.closeModal = function() {
 };
 
 window.adjustHeads = function(amount) {
-    // 1. Update variable
     headsValue = Math.max(1, Math.min(10, headsValue + amount));
-    // 2. Update UI immediately
-    const display = document.getElementById('headsDisplay');
-    if (display) {
-        display.innerText = headsValue;
-    }
+    document.getElementById('headsDisplay').innerText = headsValue;
 };
 
 window.submitToLambda = async function() {
     const confirmBtn = document.getElementById('submitRsvpBtn');
-    if (!confirmBtn) return;
-
     confirmBtn.innerText = "Saving...";
     confirmBtn.disabled = true;
 
@@ -95,29 +98,30 @@ window.submitToLambda = async function() {
         const API_URL = "https://x0p16znd81.execute-api.ap-southeast-2.amazonaws.com/rsvp";
         const response = await fetch(API_URL, {
             method: 'POST',
+            mode: 'cors', // Ensure CORS is handled
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                id: currentGuest.ID,
+                id: currentGuest.ID.trim(),
                 heads: headsValue
             })
         });
 
         if (response.ok) {
             alert("Thank you! Your RSVP is confirmed.");
-            window.closeModal();
+            closeModal();
             lockRSVPButton(headsValue);
             currentGuest.RSVP = "Done";
-            currentGuest.Heads = headsValue;
         } else {
-            throw new Error("Server error");
+            throw new Error("Server rejected the request.");
         }
     } catch (err) {
-        alert("Failed to save RSVP.");
+        console.error("RSVP Error:", err);
+        alert("Failed to save RSVP. Please try again later.");
         confirmBtn.innerText = "Confirm Attendance";
         confirmBtn.disabled = false;
     }
 };
 
+// Map & Navigation
 window.openMap = function() { window.open("https://www.google.com/maps/search/?api=1&query=Drum+Theatre+Dandenong", "_blank"); };
 window.openParking = function() { window.open("https://www.google.com/maps/search/?api=1&query=parking+near+Drum+Theatre+Dandenong", "_blank"); };
-// window.openParking = function() { alert("Free parking available after 4 PM."); };
