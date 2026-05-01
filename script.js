@@ -1,23 +1,26 @@
-/**
- * RINNAH 2026 - Production Script
- */
-
 let currentGuest = null;
 let headsValue = 1;
 
-// --- CORE DATA LOADING ---
-function loadGuestData(id) {
-    // Only use cache buster if you are NOT on a local file system
-    const isLocal = window.location.protocol === 'file:';
-    const csvUrl = isLocal ? "guests.csv" : "guests.csv?v=" + Date.now();
+// 1. On Load: Fetch Guest ID from URL and Load Data
+window.onload = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const guestId = urlParams.get('id');
 
-    Papa.parse(csvUrl, {
+    if (guestId) {
+        loadGuestData(guestId);
+    } else {
+        document.getElementById('guestDisplayName').innerText = "Beloved Guest";
+    }
+};
+
+function loadGuestData(id) {
+    const cacheBuster = "?v=" + Date.now();
+    Papa.parse("guests.csv" + cacheBuster, {
         download: true,
         header: true,
         complete: function(results) {
-            currentGuest = results.data.find(row => 
-                row.ID && row.ID.toString().trim() === id.toString().trim()
-            );
+            // Match ID from CSV
+            currentGuest = results.data.find(row => row.ID && row.ID.trim() === id.trim());
             if (currentGuest) {
                 updateUI(currentGuest);
             }
@@ -26,14 +29,10 @@ function loadGuestData(id) {
 }
 
 function updateUI(guest) {
-    // Update labels
-    const displayElement = document.getElementById('guestDisplayName');
-    const personalMsgElement = document.getElementById('personalMessage');
-
-    if (displayElement) displayElement.innerText = guest.Name;
-    if (personalMsgElement) personalMsgElement.innerText = "Welcome, " + guest.Name;
+    document.getElementById('guestDisplayName').innerText = guest.Name;
+    document.getElementById('personalMessage').innerText = "Welcome, " + guest.Name;
     
-    // Check if they already RSVP'd
+    // Check if Guest has already RSVP'd
     if (guest.RSVP && guest.RSVP.trim().toLowerCase() === "done") {
         headsValue = parseInt(guest.Heads) || 1;
         lockRSVPButton(headsValue);
@@ -45,34 +44,28 @@ function lockRSVPButton(heads) {
     if (btn) {
         btn.innerText = `✅ RSVP'd: ${heads} Seats`;
         btn.disabled = true;
-        btn.classList.add('btn-disabled');
-        btn.style.background = "#444";
-        btn.style.cursor = "default";
     }
 }
 
-// --- EVENT HANDLERS ---
-
-window.onload = function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const guestId = urlParams.get('id');
-
-    if (guestId) {
-        loadGuestData(guestId);
-    } else {
-        console.log("No ID provided in URL.");
-    }
-};
-
+// 2. Navigation Functions
 window.openEvent = function() {
     document.getElementById('invitePage').classList.add('hidden');
     document.getElementById('eventPage').classList.remove('hidden');
     const music = document.getElementById('bgMusic');
-    if (music) music.play().catch(() => console.log("Audio autoplay blocked by browser."));
+    const icon = document.getElementById('muteIcon');
+    
+    if (music) {
+        music.play().then(() => {
+            icon.innerText = "🔊"; // Set to playing icon
+        }).catch(e => {
+            console.log("Autoplay blocked by browser.");
+            icon.innerText = "🔇"; // Set to muted if browser blocks it
+        });
+    }
 };
 
+// 3. RSVP Modal Functions
 window.handleRSVP = function() {
-    console.log("RSVP button clicked");
     if (!currentGuest) {
         alert("Guest data not loaded yet.");
         return;
@@ -90,6 +83,7 @@ window.adjustHeads = function(amount) {
     document.getElementById('headsDisplay').innerText = headsValue;
 };
 
+// 4. Lambda Submission
 window.submitToLambda = async function() {
     const confirmBtn = document.getElementById('submitRsvpBtn');
     confirmBtn.innerText = "Saving...";
@@ -99,10 +93,9 @@ window.submitToLambda = async function() {
         const API_URL = "https://x0p16znd81.execute-api.ap-southeast-2.amazonaws.com/rsvp";
         const response = await fetch(API_URL, {
             method: 'POST',
-            mode: 'cors', // Ensure CORS is handled
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                id: currentGuest.ID.trim(),
+                id: currentGuest.ID,
                 heads: headsValue
             })
         });
@@ -113,16 +106,29 @@ window.submitToLambda = async function() {
             lockRSVPButton(headsValue);
             currentGuest.RSVP = "Done";
         } else {
-            throw new Error("Server rejected the request.");
+            throw new Error("Server Error");
         }
     } catch (err) {
-        console.error("RSVP Error:", err);
-        alert("Failed to save RSVP. Please try again later.");
+        console.error(err);
+        alert("Could not save RSVP. Please try again.");
         confirmBtn.innerText = "Confirm Attendance";
         confirmBtn.disabled = false;
     }
 };
 
-// Map & Navigation
+// 5. External Links
 window.openMap = function() { window.open("https://www.google.com/maps/search/?api=1&query=Drum+Theatre+Dandenong", "_blank"); };
 window.openParking = function() { window.open("https://www.google.com/maps/search/?api=1&query=parking+near+Drum+Theatre+Dandenong", "_blank"); };
+
+window.toggleMusic = function() {
+    const music = document.getElementById('bgMusic');
+    const icon = document.getElementById('muteIcon');
+    
+    if (music.paused) {
+        music.play();
+        icon.innerText = "🔊";
+    } else {
+        music.pause();
+        icon.innerText = "🔇";
+    }
+};
