@@ -34,6 +34,6 @@ jobs:
             --exclude "terraform/*" \
             --exclude ".git/*" \
             --exclude ".github/*" \
-            # --exclude "guests.csv" 
+            --exclude "guests.csv" 
 
       # CLEANUP: Removed the invalidation step that was causing the exit code 254
